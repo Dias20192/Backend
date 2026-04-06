@@ -7,17 +7,21 @@ app.use(express.json());
 
 const SECRET = "sadfdsdsfdjsnghsigmababytuffhoneyfdsd";
 
-// 💾 database file
-const db = new Low(new JSONFile("db.json"));
+// 💾 setup database (FIXED)
+const adapter = new JSONFile("db.json");
+
+const defaultData = {
+    leaderboard1: [],
+    leaderboard2: [],
+    leaderboard3: [],
+    leaderboard4: []
+};
+
+const db = new Low(adapter, defaultData);
 
 async function initDB() {
     await db.read();
-    db.data ||= {
-        leaderboard1: [],
-        leaderboard2: [],
-        leaderboard3: [],
-        leaderboard4: []
-    };
+    db.data ||= defaultData;
     await db.write();
 }
 initDB();
@@ -30,7 +34,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// 📥 update endpoints
+// 📥 update function
 async function updateBoard(name, req, res) {
     await db.read();
     db.data[name] = req.body.leaderboard || [];
@@ -39,12 +43,13 @@ async function updateBoard(name, req, res) {
     res.sendStatus(200);
 }
 
+// 📥 endpoints
 app.post("/update-leaderboard1", (req, res) => updateBoard("leaderboard1", req, res));
 app.post("/update-leaderboard2", (req, res) => updateBoard("leaderboard2", req, res));
 app.post("/update-leaderboard3", (req, res) => updateBoard("leaderboard3", req, res));
 app.post("/update-leaderboard4", (req, res) => updateBoard("leaderboard4", req, res));
 
-// 🌐 WEBSITE (clean leaderboard UI)
+// 🌐 website
 app.get("/", async (req, res) => {
     await db.read();
 
@@ -80,4 +85,6 @@ app.get("/", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+app.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
+});
